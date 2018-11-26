@@ -1,0 +1,8 @@
+[package]
+name = "gtcogs"
+version = "0.1.0"
+authors = ["Tomas Gavenciak <gavento@ucw.cz>"]
+edition = "2018"
+
+[dependencies]
+bit-set = "0.5"
