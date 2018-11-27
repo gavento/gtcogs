@@ -1,16 +1,25 @@
 extern crate bit_set;
+extern crate rand;
 
 use std::fmt::Debug;
 use std::hash::Hash;
 
 mod game;
 mod goofspiel;
+mod mccfr;
+mod distribution;
 
 pub use self::game::Game;
+pub use self::distribution::Categorical;
 
 pub type ActionIndex = u16;
-pub type Payoff = f32;
+pub type Payoff = f64;
 pub type Probability = f64;
+
+pub trait Strategy<G: Game> {
+    #[inline]
+    fn policy(&self, active: &ActivePlayer, obs: &ObservationVec<G>) -> Categorical<ActionIndex>;
+}
 
 #[derive(Clone, Hash, Debug, PartialEq, Eq)]
 pub enum PlayerObservation<O: Clone + Hash + Debug + PartialEq + Eq> {
@@ -18,35 +27,32 @@ pub enum PlayerObservation<O: Clone + Hash + Debug + PartialEq + Eq> {
     Observation(O),
 }
 
+pub type ObservationVec<G: Game> = Vec<PlayerObservation<G::Observation>>;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ActivePlayer {
     Player(u32, Vec<ActionIndex>),
-    Chance(Vec<Probability>, Vec<ActionIndex>),
+    Chance(Categorical<ActionIndex>),
     Terminal(Vec<Payoff>),
 }
 
-//#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub type History = Vec<ActionIndex>;
 
 #[derive(Clone, Debug)]
 pub struct HistoryInfo<G: Game> {
     pub history: History,
     pub active: ActivePlayer,
-    pub observations: Vec<Vec<PlayerObservation<G::Observation>>>,
+    pub observations: Vec<ObservationVec<G>>,
     pub state: G::StateData,
 }
 
 impl<G: Game> HistoryInfo<G> {
     pub fn new_with_state(game: &G, with_observations: bool, state: G::StateData) -> Self {
-        let mut observations = Vec::new();
-        if with_observations {
-            observations.resize((game.players() + 1) as usize, Vec::new())
-        }
         let history = Vec::new();
         let active = game.active_player(&history, &state);
         HistoryInfo {
             history,
-            observations,
+            observations: vec![vec![]; if with_observations { (game.players() + 1) as usize } else { 0 }],
             state,
             active,
         }

@@ -1,4 +1,4 @@
-use crate::{ActionIndex, ActivePlayer, Game, History, HistoryInfo, Probability};
+use crate::{ActionIndex, ActivePlayer, Game, History, HistoryInfo, Probability, Categorical};
 use bit_set::BitSet;
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
@@ -32,15 +32,15 @@ impl Game for Goofspiel {
     fn active_player(&self, history: &History, _state: &Self::StateData) -> ActivePlayer {
         let len = history.len();
         if len >= self.cards * 3 {
-            let mut p0 = 0f32;
-            let mut p1 = 0f32;
+            let mut p0 = 0f64;
+            let mut p1 = 0f64;
             for h in history.chunks(3) {
                 if let [c, c0, c1] = h {
                     if c0 > c1 {
-                        p0 += *c as f32;
+                        p0 += *c as f64;
                     }
                     if c1 > c0 {
-                        p1 += *c as f32;
+                        p1 += *c as f64;
                     }
                 }
             }
@@ -58,8 +58,7 @@ impl Game for Goofspiel {
             }
             let cards: Vec<_> = cards.iter().map(|c| c as ActionIndex).collect();
             if modulo == 0 {
-                let prob = 1.0 / cards.len() as Probability;
-                ActivePlayer::Chance(vec![prob; cards.len()], cards)
+                ActivePlayer::Chance(Categorical::uniform(cards))
             } else {
                 ActivePlayer::Player((modulo - 1) as u32, cards)
             }
@@ -88,7 +87,7 @@ impl Game for Goofspiel {
 
 mod test {
     use super::super::PlayerObservation::*;
-    use super::{ActivePlayer, Game, Goofspiel, Scoring};
+    use super::{ActivePlayer, Game, Goofspiel, Scoring, Categorical};
 
     #[test]
     fn test_example_play() {
@@ -101,7 +100,7 @@ mod test {
             let mut hist = g.new_history(true);
             assert_eq!(
                 hist.active,
-                ActivePlayer::Chance(vec![0.25, 0.25, 0.25, 0.25], vec![1, 2, 3, 4])
+                ActivePlayer::Chance(Categorical::uniform(vec![1, 2, 3, 4]))
             );
             for a in &[2, 1, 2, 3, 2, 4, 4, 3, 3, 1, 4, 1] {
                 hist = g.play(&hist, *a);

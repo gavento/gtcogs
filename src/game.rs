@@ -23,9 +23,8 @@ pub trait Game: Debug + Clone {
         println!("{:?} {:?}", hinfo, action);
         match hinfo.active {
             ActivePlayer::Player(p, ref actions) => debug_assert!(actions.contains(&action)),
-            ActivePlayer::Chance(ref probs, ref actions) => {
-                debug_assert!(actions.contains(&action));
-                debug_assert!((probs.iter().sum::<f64>() - 1.0).abs() < 1e-3);
+            ActivePlayer::Chance(ref dist) => {
+                debug_assert!(dist.items().contains(&action));
             }
             ActivePlayer::Terminal(_) => {
                 panic!("Playing {:?} in terminal node {:?}.", action, hinfo)
