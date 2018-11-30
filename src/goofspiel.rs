@@ -1,5 +1,5 @@
-use crate::{ActionIndex, ActivePlayer, Game, HistoryInfo, Categorical, Utility};
 use bit_set::BitSet;
+use crate::{ActionIndex, ActivePlayer, Categorical, Game, HistoryInfo, Utility};
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 pub enum Scoring {
@@ -36,23 +36,38 @@ pub struct State {
 
 impl Game for Goofspiel {
     type State = State;
-    type Observation =i32;
+    type Observation = i32;
     type Action = u32;
 
-    fn players(&self) -> usize { 2 }
+    fn players(&self) -> usize {
+        2
+    }
 
     fn initial_state(&self) -> (Self::State, ActivePlayer<Self>) {
         let state = State {
-            cards: [self.card_set.clone(), self.card_set.clone(), self.card_set.clone()],
+            cards: [
+                self.card_set.clone(),
+                self.card_set.clone(),
+                self.card_set.clone(),
+            ],
             scores: [0.0, 0.0],
         };
         let active = ActivePlayer::Chance(Categorical::uniform(
-            self.card_set.iter().map(|x| x as u32).collect::<Vec<_>>()));
+            self.card_set.iter().map(|x| x as u32).collect::<Vec<_>>(),
+        ));
         (state, active)
     }
 
-    fn update_state(&self, prev_state: &Self::State, history: &Vec<Self::Action>, prev_active: &ActivePlayer<Self>) -> 
-        (Self::State, ActivePlayer<Self>, Vec<Option<Self::Observation>>) {
+    fn update_state(
+        &self,
+        prev_state: &Self::State,
+        history: &Vec<Self::Action>,
+        prev_active: &ActivePlayer<Self>,
+    ) -> (
+        Self::State,
+        ActivePlayer<Self>,
+        Vec<Option<Self::Observation>>,
+    ) {
         // p=0, p=1 are players p=2 is chance
         let len = history.len();
         let prev_player = (history.len() + 1) % 3;
@@ -83,9 +98,9 @@ impl Game for Goofspiel {
             let d = state.scores[0] - state.scores[1];
             ActivePlayer::Terminal(match self.scoring {
                 Scoring::Absolute => state.scores.as_ref().into(),
-                Scoring::ZeroSum => { vec![d, -d] },
-                Scoring::WinLoss => { vec![d.signum(), -d.signum()] }
-            })            
+                Scoring::ZeroSum => vec![d, -d],
+                Scoring::WinLoss => vec![d.signum(), -d.signum()],
+            })
         } else {
             let acts = state.cards[next_player].iter().map(|x| x as u32).collect();
             if next_player == 2 {
@@ -95,13 +110,13 @@ impl Game for Goofspiel {
             }
         };
         // Return new info triplet
-        (state, active, vec!{obs; 3})
+        (state, active, vec![obs; 3])
     }
 }
 
 mod test {
     use super::super::PlayerObservation::*;
-    use super::{ActivePlayer, Game, Goofspiel, Scoring, Categorical};
+    use super::{ActivePlayer, Categorical, Game, Goofspiel, Scoring};
 
     #[test]
     fn test_example_play() {

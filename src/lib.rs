@@ -9,16 +9,19 @@ mod goofspiel;
 //mod mccfr;
 mod distribution;
 
-pub use self::game::{Game, HistoryInfo, PlayerObservation, ActivePlayer};
 pub use self::distribution::Categorical;
+pub use self::game::{ActivePlayer, Game, HistoryInfo, PlayerObservation};
 
 pub type ActionIndex = u32;
 pub type Utility = f64;
 
 pub trait Strategy<G: Game> {
     #[inline]
-    fn policy(&self, active: &ActivePlayer<G>, obs: &Vec<PlayerObservation<G::Observation>>) -> Categorical<ActionIndex>;
+    fn policy(
+        &self,
+        active: &ActivePlayer<G>,
+        obs: &Vec<PlayerObservation<G::Observation>>,
+    ) -> Categorical<ActionIndex>;
 }
 
 //pub type History = ;
-

@@ -1,6 +1,6 @@
+use std::borrow::Cow;
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::borrow::Cow;
 
 use crate::{ActionIndex, Categorical, Utility};
 
@@ -14,8 +14,16 @@ pub trait Game: Debug + Clone {
     fn initial_state(&self) -> (Self::State, ActivePlayer<Self>);
     /// TODO: Give the prev_active?
     /// TODO: Give prev_history and action separately?
-    fn update_state(&self, state: &Self::State, history: &Vec<Self::Action>, prev_active: &ActivePlayer<Self>) -> 
-        (Self::State, ActivePlayer<Self>, Vec<Option<Self::Observation>>);
+    fn update_state(
+        &self,
+        state: &Self::State,
+        history: &Vec<Self::Action>,
+        prev_active: &ActivePlayer<Self>,
+    ) -> (
+        Self::State,
+        ActivePlayer<Self>,
+        Vec<Option<Self::Observation>>,
+    );
 
     fn start(&self) -> HistoryInfo<Self> {
         let (state, active) = self.initial_state();
@@ -28,7 +36,7 @@ pub trait Game: Debug + Clone {
         }
         match hist.active.actions().iter().position(|x| x == action) {
             Some(idx) => self.play(&hist, idx),
-            None => panic!("action {:?} not available in state {:?}", action, hist)
+            None => panic!("action {:?} not available in state {:?}", action, hist),
         }
     }
 
@@ -38,9 +46,12 @@ pub trait Game: Debug + Clone {
             panic!("playing in terminal state {:?}", hist);
         }
         let prev_player = hist.active.player();
-        let action = hist.active.actions()
-                         .get(action_index as usize)
-                         .expect("action index outside action list").clone();
+        let action = hist
+            .active
+            .actions()
+            .get(action_index as usize)
+            .expect("action index outside action list")
+            .clone();
         let history_indices = extended_vec(&hist.history_indices, action_index as ActionIndex);
         let history = extended_vec(&hist.history, action);
         // Observation extensions by own action
@@ -69,7 +80,6 @@ pub trait Game: Debug + Clone {
         }
     }
 
-
     ////////// Alternatively, offer to reuse the state, observations, history, etc.
     // Reuse variant of play()
     fn play_owned(&self, hist: HistoryInfo<Self>, action_index: usize) -> HistoryInfo<Self> {
@@ -84,9 +94,15 @@ pub trait Game: Debug + Clone {
     }
 
     // The player would optionally implement state reuse with (only this instead of update_state)
-    fn update_state_cow(&self, state: Cow<Self::State>, history: &Vec<Self::Action>) -> 
-        (Self::State, ActivePlayer<Self>, Vec<Option<Self::Observation>>)
-    {
+    fn update_state_cow(
+        &self,
+        state: Cow<Self::State>,
+        history: &Vec<Self::Action>,
+    ) -> (
+        Self::State,
+        ActivePlayer<Self>,
+        Vec<Option<Self::Observation>>,
+    ) {
         // If you want to modify an existing state
         let mut state2 = state.into_owned();
         // Otherwise just use state as &State via Deref
@@ -138,7 +154,7 @@ impl<G: Game> HistoryInfo<G> {
         HistoryInfo {
             history_indices: Vec::new(),
             history: Vec::new(),
-            observations: vec!{vec!{}; (game.players() + 1) as usize},
+            observations: vec![vec!{}; (game.players() + 1) as usize],
             state,
             active,
         }
