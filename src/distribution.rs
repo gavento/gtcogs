@@ -1,4 +1,7 @@
-use rand::{Rng, thread_rng, distributions::{Distribution, WeightedIndex}};
+use rand::{
+    distributions::{Distribution, WeightedIndex},
+    thread_rng, Rng,
+};
 
 #[derive(Clone, Debug)]
 pub struct Categorical<T>(Vec<f64>, WeightedIndex<f64>, Vec<T>);
@@ -50,7 +53,9 @@ impl<T> Categorical<T> {
     pub fn new_normalized<IT: Into<Vec<T>>, IP: Into<Vec<f64>>>(probs: IP, items: IT) -> Self {
         let mut ps: Vec<f64> = probs.into();
         let s: f64 = ps.iter().sum();
-        ps.iter_mut().for_each(|p| { *p = *p / s; });
+        ps.iter_mut().for_each(|p| {
+            *p = *p / s;
+        });
         Self::new(ps, items)
     }
 
@@ -63,7 +68,7 @@ impl<T> Categorical<T> {
         Categorical(ps, wi, is)
     }
 
-/*
+    /*
     pub fn epsilon_smooth(&mut self, epsilon: f64) {
         assert!(epsilon >= 0.0 && epsilon <= 1.0);
         self.0.iter_mut().for_each(|mut pr| *pr = *pr * (1.0 - epsilon) + epsilon / self.2.len() as f64);
@@ -88,4 +93,3 @@ impl<T: Clone> Categorical<T> {
         (self.0[idx], self.2[idx].clone())
     }
 }
-
