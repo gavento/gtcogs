@@ -139,16 +139,16 @@ mod test {
                 hist.observations[0],
                 vec![
                     Observation(2),
-                    OwnAction(0),
+                    OwnAction(1),
                     Observation(-1),
                     Observation(3),
-                    OwnAction(0),
+                    OwnAction(2),
                     Observation(-1),
                     Observation(4),
-                    OwnAction(0),
+                    OwnAction(3),
                     Observation(0),
                     Observation(1),
-                    OwnAction(0),
+                    OwnAction(4),
                     Observation(1)
                 ]
             );
@@ -156,16 +156,16 @@ mod test {
                 hist.observations[1],
                 vec![
                     Observation(2),
-                    OwnAction(1),
-                    Observation(-1),
-                    Observation(3),
                     OwnAction(2),
                     Observation(-1),
+                    Observation(3),
+                    OwnAction(4),
+                    Observation(-1),
                     Observation(4),
-                    OwnAction(1),
+                    OwnAction(3),
                     Observation(0),
                     Observation(1),
-                    OwnAction(0),
+                    OwnAction(1),
                     Observation(1)
                 ]
             );
