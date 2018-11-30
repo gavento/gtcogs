@@ -20,7 +20,7 @@ pub trait Strategy<G: Game> {
     fn policy(
         &self,
         active: &ActivePlayer<G>,
-        obs: &Vec<PlayerObservation<G::Observation>>,
+        obs: &Vec<PlayerObservation<G>>,
     ) -> Categorical<ActionIndex>;
 }
 

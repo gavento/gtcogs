@@ -53,11 +53,11 @@ pub trait Game: Debug + Clone {
             .expect("action index outside action list")
             .clone();
         let history_indices = extended_vec(&hist.history_indices, action_index as ActionIndex);
-        let history = extended_vec(&hist.history, action);
+        let history = extended_vec(&hist.history, action.clone());
         // Observation extensions by own action
         let mut observations = hist.observations.clone();
         if let Some(p) = prev_player {
-            observations[p].push(PlayerObservation::OwnAction(action_index as u32));
+            observations[p].push(PlayerObservation::OwnAction(action));
         }
         // Game-specific logic
         let (state, active, obs) = self.update_state(&hist.state, &history, &hist.active);
@@ -111,9 +111,9 @@ pub trait Game: Debug + Clone {
 }
 
 #[derive(Clone, Hash, Debug, PartialEq, Eq)]
-pub enum PlayerObservation<O: Clone + Hash + Debug + PartialEq + Eq> {
-    OwnAction(ActionIndex),
-    Observation(O),
+pub enum PlayerObservation<G: Game> {
+    OwnAction(G::Action),
+    Observation(G::Observation),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -145,7 +145,7 @@ pub struct HistoryInfo<G: Game> {
     pub history_indices: Vec<ActionIndex>,
     pub history: Vec<G::Action>,
     pub active: ActivePlayer<G>,
-    pub observations: Vec<Vec<PlayerObservation<G::Observation>>>,
+    pub observations: Vec<Vec<PlayerObservation<G>>>,
     pub state: G::State,
 }
 
