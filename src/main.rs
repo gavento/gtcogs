@@ -1,5 +1,4 @@
 use std::fmt::Debug;
-use std::hash::Hash;
 
 #[derive(Debug)]
 struct X<T: Debug> {
