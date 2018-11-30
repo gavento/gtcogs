@@ -1,82 +1,87 @@
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::borrow::Cow;
 
-use crate::{ActionIndex, ActivePlayer, History, HistoryInfo, PlayerObservation};
+use crate::{ActionIndex, Categorical, Utility};
 
 pub trait Game: Debug + Clone {
-    type StateData: Clone + Default + Debug;
+    type State: Clone + Debug;
     type Observation: Clone + Debug + Hash + PartialEq + Eq;
+    type Action: Clone + Debug + Hash + PartialEq + Eq;
 
-    fn new_history(&self, with_observations: bool) -> HistoryInfo<Self> {
-        HistoryInfo::new(self, with_observations)
-    }
+    fn players(&self) -> usize { 2 }
+    fn initial(&self) -> HistoryInfo<Self>;
+    fn play(&self, history: &HistoryInfo<Self>, action_index: ActionIndex) -> HistoryInfo<Self>;
+}
 
-    fn players(&self) -> u32 {
-        2
-    }
+#[derive(Clone, Hash, Debug, PartialEq, Eq)]
+pub enum PlayerObservation<O: Clone + Hash + Debug + PartialEq + Eq> {
+    OwnAction(ActionIndex),
+    Observation(O),
+}
 
-    fn action_name(&self, history: &HistoryInfo<Self>, action: ActionIndex) -> String {
-        action.to_string()
-    }
+#[derive(Clone, Debug, PartialEq)]
+pub enum ActivePlayer<G: Game> {
+    Player(u32, Vec<G::Action>),
+    Chance(Categorical<G::Action>),
+    Terminal(Vec<Utility>),
+}
 
-    fn play(&self, hinfo: &HistoryInfo<Self>, action: ActionIndex) -> HistoryInfo<Self> {
-        println!("{:?} {:?}", hinfo, action);
-        match hinfo.active {
-            ActivePlayer::Player(p, ref actions) => debug_assert!(actions.contains(&action)),
-            ActivePlayer::Chance(ref dist) => {
-                debug_assert!(dist.items().contains(&action));
-            }
-            ActivePlayer::Terminal(_) => {
-                panic!("Playing {:?} in terminal node {:?}.", action, hinfo)
-            }
-        };
+#[derive(Clone, Debug)]
+pub struct HistoryInfo<G: Game> {
+    pub history_indices: Vec<ActionIndex>,
+    pub history: Vec<G::Action>,
+    pub active: ActivePlayer<G>,
+    pub observations: Vec<Vec<PlayerObservation<G::Observation>>>,
+    pub state: G::State,
+}
 
-        let hist = &hinfo.history;
-
-        let new_state = self.update_state(&hist, &hinfo.state, action);
-
-        let mut new_hist = hist.clone(); // Todo: more efficient copy (prealloc)?
-        new_hist.push(action);
-
-        let new_active = self.active_player(&new_hist, &new_state);
-
-        let mut new_obs = hinfo.observations.clone();
-        if !new_obs.is_empty() {
-            let obs = self.observations(&new_hist, &new_state);
-            for (i, (ref mut ovec, ref o)) in new_obs.iter_mut().zip(obs.iter()).enumerate() {
-                if let ActivePlayer::Player(p, _) = hinfo.active {
-                    if p as usize == i {
-                        ovec.push(PlayerObservation::OwnAction(action));
-                    }
-                }
-                if let Some(oin) = o {
-                    ovec.push(PlayerObservation::Observation(oin.clone()));
-                }
-            }
-        }
-
+impl<G: Game> HistoryInfo<G> {
+    pub fn new(game: &G, state: G::State, active: ActivePlayer<G>) -> Self {
         HistoryInfo {
-            history: new_hist,
+            history_indices: Vec::new(),
+            history: Vec::new(),
+            observations: vec!{vec!{}; (game.players() + 1) as usize},
+            state,
+            active,
+        }
+    }
+
+    pub fn advance(&self, action_index: ActionIndex, new_state: G::State, new_active: ActivePlayer<G>,
+                new_observations: Vec<Option<G::Observation>>) -> Self {
+        let mut player = None;
+        let action: G::Action = match self.active {
+            ActivePlayer::Terminal(_) => panic!("play in terminal game state {:?}", self),
+            ActivePlayer::Player(p, ref actions) => {
+                player = Some(p);
+                actions[action_index as usize].clone()
+                },
+            ActivePlayer::Chance(ref dist) => dist.items()[action_index as usize].clone(),
+        };
+        let obs = self.observations.iter()
+                      .zip(new_observations)
+                      .map(|(ovec, o)|
+                            if let Some(oin) = o {
+                                extended_vec(ovec, PlayerObservation::Observation(oin))
+                                // TODO: Own observation if active player
+                            } else {
+                                ovec.clone()
+                            })
+                      .collect();
+        HistoryInfo {
+            history_indices: extended_vec(&self.history_indices, action_index),
+            history: extended_vec(&self.history, action),
+            observations: obs,
             state: new_state,
-            observations: new_obs,
             active: new_active,
         }
     }
+}
 
-    fn update_state(
-        &self,
-        history: &History,
-        old_state: &Self::StateData,
-        action: ActionIndex,
-    ) -> Self::StateData {
-        Default::default()
-    }
-
-    fn active_player(&self, history: &History, state: &Self::StateData) -> ActivePlayer;
-
-    fn observations(
-        &self,
-        history: &History,
-        state: &Self::StateData,
-    ) -> Vec<Option<Self::Observation>>;
+#[inline]
+fn extended_vec<T: Clone>(v: &Vec<T>, val: T) -> Vec<T> {
+    let mut v2 = Vec::with_capacity(v.len() + 1);
+    v2.clone_from(v);
+    v2.push(val);
+    v2
 }
