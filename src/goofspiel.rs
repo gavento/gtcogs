@@ -60,27 +60,26 @@ impl Game for Goofspiel {
 
     fn update_state(
         &self,
-        prev_state: &Self::State,
-        history: &Vec<Self::Action>,
-        prev_active: &ActivePlayer<Self>,
+        hist: &HistoryInfo<Self>,
+        action: &Self::Action,
     ) -> (
         Self::State,
         ActivePlayer<Self>,
         Vec<Option<Self::Observation>>,
     ) {
+        let history = &hist.history;
         // p=0, p=1 are players p=2 is chance
         let len = history.len();
-        let prev_player = (history.len() + 1) % 3;
-        let next_player = (history.len() - 1) % 3;
-        let action = *history.last().unwrap();
+        let prev_player = (history.len() + 2) % 3;
+        let next_player = (history.len()) % 3;
         let mut obs = None;
         // Play the selected card, update state
-        let mut state = prev_state.clone();
-        state.cards[prev_player].remove(action as usize);
+        let mut state = hist.state.clone();
+        state.cards[prev_player].remove(*action as usize);
         // Score update and observation
         if prev_player == 1 {
-            let bet = self.values[(history[len - 3] - 1) as usize];
-            let winner = ((history[len - 2] as i32) - (action as i32)).signum();
+            let bet = self.values[(history[len - 2] - 1) as usize];
+            let winner = ((history[len - 1] as i32) - (*action as i32)).signum();
             if winner == 1 {
                 state.scores[0] += bet;
             }
@@ -91,10 +90,10 @@ impl Game for Goofspiel {
         }
         // Observe public card
         if prev_player == 2 {
-            obs = Some(action as i32);
+            obs = Some(*action as i32);
         }
         // Terminal reached or active player
-        let active = if len == self.cards * 3 {
+        let active = if len + 1 == self.cards * 3 {
             let d = state.scores[0] - state.scores[1];
             ActivePlayer::Terminal(match self.scoring {
                 Scoring::Absolute => state.scores.as_ref().into(),
