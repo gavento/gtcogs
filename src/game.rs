@@ -16,9 +16,8 @@ pub trait Game: Debug + Clone {
     /// TODO: Give prev_history and action separately?
     fn update_state(
         &self,
-        state: &Self::State,
-        history: &Vec<Self::Action>,
-        prev_active: &ActivePlayer<Self>,
+        hisr: &HistoryInfo<Self>,
+        action: &Self::Action,
     ) -> (
         Self::State,
         ActivePlayer<Self>,
@@ -52,15 +51,15 @@ pub trait Game: Debug + Clone {
             .get(action_index as usize)
             .expect("action index outside action list")
             .clone();
-        let history_indices = extended_vec(&hist.history_indices, action_index as ActionIndex);
-        let history = extended_vec(&hist.history, action.clone());
         // Observation extensions by own action
         let mut observations = hist.observations.clone();
         if let Some(p) = prev_player {
-            observations[p].push(PlayerObservation::OwnAction(action));
+            observations[p].push(PlayerObservation::OwnAction(action.clone()));
         }
         // Game-specific logic
-        let (state, active, obs) = self.update_state(&hist.state, &history, &hist.active);
+        let (state, active, obs) = self.update_state(&hist, &action);
+        let history_indices = extended_vec(&hist.history_indices, action_index as ActionIndex);
+        let history = extended_vec(&hist.history, action);
         debug_assert_eq!(obs.len(), self.players() + 1);
         if let ActivePlayer::Player(p, _) = active {
             debug_assert!((p as usize) < self.players());
