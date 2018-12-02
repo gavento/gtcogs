@@ -8,9 +8,11 @@ mod game;
 mod goofspiel;
 //mod mccfr;
 mod distribution;
+mod history;
 
 pub use self::distribution::Categorical;
-pub use self::game::{ActivePlayer, Game, HistoryInfo, PlayerObservation};
+pub use self::game::{Game};
+pub use self::history::{ActivePlayer, HistoryInfo, PlayerObservation};
 
 pub type ActionIndex = u32;
 pub type Utility = f64;
