@@ -2,21 +2,20 @@ use std::borrow::Cow;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use crate::{ActionIndex, Categorical, Utility};
+use crate::{ActionIndex, Categorical, Utility, HistoryInfo, ActivePlayer, PlayerObservation};
 
 pub trait Game: Debug + Clone {
     type State: Clone + Debug;
     type Observation: Clone + Debug + Hash + PartialEq + Eq;
     type Action: Clone + Debug + Hash + PartialEq + Eq;
 
-    /// TO BE IMPLEMENTED BY PLAYER:
     fn players(&self) -> usize;
+
     fn initial_state(&self) -> (Self::State, ActivePlayer<Self>);
-    /// TODO: Give the prev_active?
-    /// TODO: Give prev_history and action separately?
+
     fn update_state(
         &self,
-        hisr: &HistoryInfo<Self>,
+        hist: &HistoryInfo<Self>,
         action: &Self::Action,
     ) -> (
         Self::State,
@@ -40,130 +39,45 @@ pub trait Game: Debug + Clone {
     }
 
     fn play(&self, hist: &HistoryInfo<Self>, action_index: usize) -> HistoryInfo<Self> {
+        self.play_owned(hist.clone(), action_index)
+    }
+
+    fn play_owned(&self, hist: HistoryInfo<Self>, action_index: usize) -> HistoryInfo<Self> {
+        // Initial checks
         debug_assert_eq!(hist.observations.len(), self.players() + 1);
         if let ActivePlayer::Terminal(_) = hist.active {
             panic!("playing in terminal state {:?}", hist);
         }
-        let prev_player = hist.active.player();
+        // Extract action
         let action = hist
             .active
             .actions()
             .get(action_index as usize)
             .expect("action index outside action list")
             .clone();
-        // Observation extensions by own action
-        let mut observations = hist.observations.clone();
-        if let Some(p) = prev_player {
-            observations[p].push(PlayerObservation::OwnAction(action.clone()));
-        }
-        // Game-specific logic
+        // Game-specific logic and checks
         let (state, active, obs) = self.update_state(&hist, &action);
-        let history_indices = extended_vec(&hist.history_indices, action_index as ActionIndex);
-        let history = extended_vec(&hist.history, action);
         debug_assert_eq!(obs.len(), self.players() + 1);
         if let ActivePlayer::Player(p, _) = active {
             debug_assert!((p as usize) < self.players());
         }
+        // Dismantle hist
+        let mut history_indices = hist.history_indices;
+        let mut history = hist.history;
+        let mut observations = hist.observations;
+        // Observation extensions by own action
+        if let Some(p) = hist.active.player() {
+            observations[p].push(PlayerObservation::OwnAction(action.clone()));
+        }
+        history_indices.push(action_index as ActionIndex);
+        history.push(action);
         // Observation extension by new observed
         for (ovec, option_ob) in observations.iter_mut().zip(obs) {
             if let Some(ob) = option_ob {
                 ovec.push(PlayerObservation::Observation(ob))
             }
         }
-        HistoryInfo {
-            history_indices,
-            history,
-            observations,
-            state,
-            active,
-        }
-    }
-
-    ////////// Alternatively, offer to reuse the state, observations, history, etc.
-    // Reuse variant of play()
-    fn play_owned(&self, hist: HistoryInfo<Self>, action_index: usize) -> HistoryInfo<Self> {
-        unimplemented!()
-    }
-    // Match on Cow
-    fn play_cow(&self, hist: Cow<HistoryInfo<Self>>, action_index: usize) -> HistoryInfo<Self> {
-        match hist {
-            Cow::Borrowed(r) => self.play(r, action_index),
-            Cow::Owned(h) => self.play_owned(h, action_index),
-        }
-    }
-
-    // The player would optionally implement state reuse with (only this instead of update_state)
-    fn update_state_cow(
-        &self,
-        state: Cow<Self::State>,
-        history: &Vec<Self::Action>,
-    ) -> (
-        Self::State,
-        ActivePlayer<Self>,
-        Vec<Option<Self::Observation>>,
-    ) {
-        // If you want to modify an existing state
-        let mut state2 = state.into_owned();
-        // Otherwise just use state as &State via Deref
-        unimplemented!()
+        HistoryInfo { state, active, history, history_indices, observations }
     }
 }
 
-#[derive(Clone, Hash, Debug, PartialEq, Eq)]
-pub enum PlayerObservation<G: Game> {
-    OwnAction(G::Action),
-    Observation(G::Observation),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum ActivePlayer<G: Game> {
-    Player(u32, Vec<G::Action>),
-    Chance(Categorical<G::Action>),
-    Terminal(Vec<Utility>),
-}
-
-impl<G: Game> ActivePlayer<G> {
-    pub fn actions<'a>(&'a self) -> &'a [G::Action] {
-        match self {
-            ActivePlayer::Terminal(_) => &[],
-            ActivePlayer::Player(p, ref actions) => actions,
-            ActivePlayer::Chance(ref dist) => dist.items(),
-        }
-    }
-    pub fn player<'a>(&'a self) -> Option<usize> {
-        match self {
-            ActivePlayer::Terminal(_) => None,
-            ActivePlayer::Player(p, _) => Some(*p as usize),
-            ActivePlayer::Chance(_) => None,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct HistoryInfo<G: Game> {
-    pub history_indices: Vec<ActionIndex>,
-    pub history: Vec<G::Action>,
-    pub active: ActivePlayer<G>,
-    pub observations: Vec<Vec<PlayerObservation<G>>>,
-    pub state: G::State,
-}
-
-impl<G: Game> HistoryInfo<G> {
-    pub fn new(game: &G, state: G::State, active: ActivePlayer<G>) -> Self {
-        HistoryInfo {
-            history_indices: Vec::new(),
-            history: Vec::new(),
-            observations: vec![vec!{}; (game.players() + 1) as usize],
-            state,
-            active,
-        }
-    }
-}
-
-#[inline]
-fn extended_vec<T: Clone>(v: &Vec<T>, val: T) -> Vec<T> {
-    let mut v2 = Vec::with_capacity(v.len() + 1);
-    v2.clone_from(v);
-    v2.push(val);
-    v2
-}

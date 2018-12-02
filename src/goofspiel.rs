@@ -10,19 +10,27 @@ pub enum Scoring {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Goofspiel {
-    cards: usize,
-    scoring: Scoring,
+    /// Number of cards.
+    pub cards: usize,
+    /// Final scoring type.
+    pub scoring: Scoring,
+    /// Point values of the chance cards (cards in hands always have strength 0..N-1).
+    pub values: Vec<Utility>,
+    /// Cached full-hand bit set
     card_set: BitSet,
-    values: Vec<Utility>,
 }
 
 impl Goofspiel {
     pub fn new(cards: usize, scoring: Scoring) -> Self {
+        Self::with_values(cards, scoring, (1..cards + 1).map(|x| x as Utility).collect::<Vec<_>>())
+    }
+
+    pub fn with_values<V: Into<Vec<Utility>>>(cards: usize, scoring: Scoring, values: V) -> Self {
         Goofspiel {
             cards,
             scoring,
             card_set: (1..cards + 1).collect(),
-            values: (1..cards + 1).map(|x| x as Utility).collect(),
+            values: values.into(),
         }
     }
 }
@@ -113,6 +121,7 @@ impl Game for Goofspiel {
     }
 }
 
+#[cfg(test)]
 mod test {
     use super::super::PlayerObservation::*;
     use super::{ActivePlayer, Categorical, Game, Goofspiel, Scoring};
