@@ -1,6 +1,6 @@
 language: rust
 rust:
-  - stable
+#  - stable   # TODO: enable once ed. 2018 is stable
   - nightly
 cache: cargo
 script:
