@@ -1,4 +1,5 @@
 # GT Cogs
+[![Build Status](https://travis-ci.org/gavento/gtcogs.svg?branch=master)](https://travis-ci.org/gavento/gtcogs)
 
 Sketch of a [game theory](https://en.wikipedia.org/wiki/Game_theory) framework and API in [Rust](https://www.rust-lang.org/).
 
