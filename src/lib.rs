@@ -1,29 +1,21 @@
 extern crate bit_set;
 extern crate rand;
 
-use std::fmt::Debug;
-use std::hash::Hash;
-
-mod game;
-mod goofspiel;
 //mod mccfr;
 mod distribution;
+mod game;
+mod goofspiel;
 mod history;
+mod strategy;
+mod treegame;
 
 pub use self::distribution::Categorical;
-pub use self::game::{Game};
+pub use self::game::Game;
+pub use self::goofspiel::Goofspiel;
 pub use self::history::{ActivePlayer, HistoryInfo, PlayerObservation};
+pub use self::strategy::{Strategy, UniformStrategy};
+pub use self::treegame::TreeGame;
 
 pub type ActionIndex = u32;
 pub type Utility = f64;
 
-pub trait Strategy<G: Game> {
-    #[inline]
-    fn policy(
-        &self,
-        active: &ActivePlayer<G>,
-        obs: &Vec<PlayerObservation<G>>,
-    ) -> Categorical<ActionIndex>;
-}
-
-//pub type History = ;

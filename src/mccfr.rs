@@ -25,12 +25,12 @@ impl<G: Game> OuterMCCFR<G> {
     pub fn sample_rng<OS, R>(&mut self, rng: &mut R, player: usize, other_strats: &[OS], epsilon: f64) 
         where OS: Strategy<G>, R: Rng {
         self.iterations += 1;
-        self.sample_rec(rng, player, other_strats, &self.game.new_history(true), 1.0, 1.0, 1.0, epsilon);
+        self.sample_rec(rng, player, other_strats, self.game.start(), 1.0, 1.0, 1.0, epsilon);
     }
 
     /// returns (utility, p_tail, p_sample_leaf)
     fn sample_rec<OS: Strategy<G>, R: Rng>(&mut self, rng: &mut R, player: usize, other_strats: &[OS],
-                                     hinfo: &HistoryInfo<G>,
+                                     hinfo: HistoryInfo<G>,
                                      p_reach_updated: f64, p_reach_others: f64,
                                      p_sample: f64, epsilon: f64) -> (f64, f64, f64) {
         self.nodes_touched += 1;
@@ -76,14 +76,18 @@ impl<G: Game> OuterMCCFR<G> {
 
 
 impl<G: Game> Strategy<G> for OuterMCCFR<G> {
-    fn policy(&self, active: &ActivePlayer, obs: &ObservationVec<G>) -> Categorical<ActionIndex> {
+    fn policy(
+        &self,
+        active: &ActivePlayer<G>,
+        obs: &Vec<PlayerObservation<G>>,
+    ) -> Categorical<ActionIndex> {
         if let ActivePlayer::Player(p, ref actions) = active {
             match self.table.get(obs) {
                 None => Categorical::uniform(&actions as &[_]),
                 Some(ref d) => Categorical::new_normalized(&d.0 as &[_], &actions as &[_]),
             }
         } else {
-            panic!("Policy requested for non-player state {:?}, observed {:?}", active, obs)
+            panic!("strategy requested for non-player state {:?}, observed {:?}", active, obs)
         }
     }
 }
