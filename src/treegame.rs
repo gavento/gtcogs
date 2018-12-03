@@ -1,4 +1,4 @@
-use crate::{ActionIndex, ActivePlayer, Categorical, Game, HistoryInfo};
+use crate::{ActionIndex, ActivePlayer, Categorical, Game, HistoryInfo, PlayerObservation};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -89,13 +89,16 @@ where
         .iter()
         .enumerate()
         .map(|(i, a)| {
-            let (_, _, new_obs) = game.update_state(hist, a);
-            let h2 = game.play(hist, i); // TODO: remove duplicate evaluation
+            let h2 = game.play(hist, i);
             let obs_len = obs_index.len();
-            let obs = new_obs
-                .into_iter()
-                .map(|o| o.map(|someo| *obs_index.entry(someo).or_insert(obs_len + 1)))
-                .collect();
+            let obs = h2.observations_since(hist).iter()
+                .map(|os| {
+                    if let Some(PlayerObservation::Observation(o)) = os.last() {
+                        Some(*obs_index.entry(o.clone()).or_insert(obs_len + 1))
+                    } else {
+                        None
+                    }
+                }).collect();
             traverse_game(game, &h2, obs, obs_index)
         })
         .collect();

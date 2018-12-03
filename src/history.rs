@@ -52,4 +52,10 @@ impl<G: Game> HistoryInfo<G> {
             active,
         }
     }
+
+    pub fn observations_since<'a>(&'a self, other: &Self) -> Vec<&'a[PlayerObservation<G>]> {
+        self.observations.iter().zip(other.observations.iter()).map(|(so, oo)| {
+            &so[oo.len() ..]
+        }).collect()
+    }
 }
