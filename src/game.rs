@@ -4,6 +4,7 @@ use std::hash::Hash;
 
 use crate::{ActionIndex, Categorical, Utility, HistoryInfo, ActivePlayer, PlayerObservation};
 
+
 pub trait Game: Debug + Clone {
     type State: Clone + Debug;
     type Observation: Clone + Debug + Hash + PartialEq + Eq;
