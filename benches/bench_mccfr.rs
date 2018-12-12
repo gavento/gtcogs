@@ -40,3 +40,10 @@ fn bench_os_mccfr_goofspiel5_tree(b: &mut Bencher) {
     let mut rng = SmallRng::seed_from_u64(4);
     b.iter(|| mc.compute_rng(1, 0.6, &mut rng));
 }
+
+#[bench]
+fn bench_os_mccfr_par_goofspiel5(b: &mut Bencher) {
+    let g = Goofspiel::new(5, goofspiel::Scoring::ZeroSum);
+    let mut mc = gtcogs::par_mccfr::OuterMCCFR::new(g);
+    b.iter(|| mc.compute_par(1000, 0.6, 4));
+}

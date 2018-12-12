@@ -1,12 +1,15 @@
 extern crate bit_set;
 extern crate rand;
 extern crate hashbrown;
+extern crate fxhash;
+extern crate rayon;
 
 mod distribution;
 mod game;
 pub mod goofspiel;
 mod history;
 mod mccfr;
+pub mod par_mccfr;
 mod strategy;
 mod treegame;
 
