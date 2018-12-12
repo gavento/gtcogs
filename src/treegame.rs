@@ -90,14 +90,17 @@ where
         .map(|(i, _a)| {
             let h2 = game.play(hist, i);
             let obs_len = obs_index.len();
-            let obs = h2.observations_since(hist).iter()
+            let obs = h2
+                .observations_since(hist)
+                .iter()
                 .map(|os| {
                     if let Some(Observation::Obs(o)) = os.last() {
                         Some(*obs_index.entry(o.clone()).or_insert(obs_len + 1))
                     } else {
                         None
                     }
-                }).collect();
+                })
+                .collect();
             traverse_game(game, &h2, obs, obs_index)
         })
         .collect();
@@ -120,7 +123,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::{goofspiel, Game, TreeGame, ActivePlayer};
+    use crate::{goofspiel, ActivePlayer, Game, TreeGame};
 
     #[test]
     fn treegame_goofspiel() {

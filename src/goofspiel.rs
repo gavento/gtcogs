@@ -1,5 +1,5 @@
-use bit_set::BitSet;
 use crate::{ActivePlayer, Categorical, Game, HistoryInfo, Utility};
+use bit_set::BitSet;
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 pub enum Scoring {
@@ -22,7 +22,11 @@ pub struct Goofspiel {
 
 impl Goofspiel {
     pub fn new(cards: usize, scoring: Scoring) -> Self {
-        Self::with_values(cards, scoring, (1..cards + 1).map(|x| x as Utility).collect::<Vec<_>>())
+        Self::with_values(
+            cards,
+            scoring,
+            (1..cards + 1).map(|x| x as Utility).collect::<Vec<_>>(),
+        )
     }
 
     pub fn with_values<V: Into<Vec<Utility>>>(cards: usize, scoring: Scoring, values: V) -> Self {
@@ -123,8 +127,8 @@ impl Game for Goofspiel {
 
 #[cfg(test)]
 mod test {
-    use crate::Observation::*;
     use super::{ActivePlayer, Categorical, Game, Goofspiel, Scoring};
+    use crate::Observation::*;
 
     #[test]
     fn test_example_play() {

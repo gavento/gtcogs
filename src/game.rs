@@ -1,8 +1,7 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use crate::{ActionIndex, HistoryInfo, ActivePlayer, Observation};
-
+use crate::{ActionIndex, ActivePlayer, HistoryInfo, Observation};
 
 pub trait Game: Debug + Clone {
     type State: Clone + Debug;
@@ -77,7 +76,12 @@ pub trait Game: Debug + Clone {
                 ovec.push(Observation::Obs(ob))
             }
         }
-        HistoryInfo { state, active, history, history_indices, observations }
+        HistoryInfo {
+            state,
+            active,
+            history,
+            history_indices,
+            observations,
+        }
     }
 }
-

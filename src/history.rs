@@ -1,11 +1,12 @@
-use crate::{Game, Categorical, Utility, ActionIndex};
-use std::{hash::Hash, fmt::Debug};
-
+use crate::{ActionIndex, Categorical, Game, Utility};
+use std::{fmt::Debug, hash::Hash};
 
 #[derive(Clone, Hash, Debug, PartialEq, Eq)]
-pub enum Observation<A, O> where
+pub enum Observation<A, O>
+where
     A: Clone + Hash + Debug + PartialEq + Eq,
-    O: Clone + Hash + Debug + PartialEq + Eq {
+    O: Clone + Hash + Debug + PartialEq + Eq,
+{
     Own(A),
     Obs(O),
 }
@@ -54,15 +55,17 @@ impl<G: Game> HistoryInfo<G> {
         HistoryInfo {
             history_indices: Vec::new(),
             history: Vec::new(),
-            observations: vec![vec!{}; (game.players() + 1) as usize],
+            observations: vec![vec! {}; (game.players() + 1) as usize],
             state,
             active,
         }
     }
 
-    pub fn observations_since<'a>(&'a self, other: &Self) -> Vec<&'a[PlayerObservation<G>]> {
-        self.observations.iter().zip(other.observations.iter()).map(|(so, oo)| {
-            &so[oo.len() ..]
-        }).collect()
+    pub fn observations_since<'a>(&'a self, other: &Self) -> Vec<&'a [PlayerObservation<G>]> {
+        self.observations
+            .iter()
+            .zip(other.observations.iter())
+            .map(|(so, oo)| &so[oo.len()..])
+            .collect()
     }
 }
