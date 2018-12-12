@@ -1,8 +1,10 @@
 language: rust
 rust:
-#  - stable   # TODO: enable once ed. 2018 is stable
+  - stable
   - nightly
 cache: cargo
 script:
   - cargo build --verbose
   - cargo test --verbose
+  - if [ "$TRAVIS_RUST_VERSION" == "nightly" ]; then cargo bench --verbose; fi
+  - cargo doc --verbose --no-deps
