@@ -12,7 +12,7 @@ mod treegame;
 pub use self::distribution::Categorical;
 pub use self::game::Game;
 pub use self::goofspiel::Goofspiel;
-pub use self::history::{ActivePlayer, HistoryInfo, PlayerObservation};
+pub use self::history::{ActivePlayer, HistoryInfo, PlayerObservation, Observation};
 pub use self::strategy::{Strategy, UniformStrategy};
 pub use self::treegame::TreeGame;
 

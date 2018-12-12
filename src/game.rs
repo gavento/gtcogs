@@ -1,8 +1,7 @@
-use std::borrow::Cow;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use crate::{ActionIndex, Categorical, Utility, HistoryInfo, ActivePlayer, PlayerObservation};
+use crate::{ActionIndex, HistoryInfo, ActivePlayer, Observation};
 
 
 pub trait Game: Debug + Clone {
@@ -68,14 +67,14 @@ pub trait Game: Debug + Clone {
         let mut observations = hist.observations;
         // Observation extensions by own action
         if let Some(p) = hist.active.player() {
-            observations[p].push(PlayerObservation::OwnAction(action.clone()));
+            observations[p].push(Observation::Own(action.clone()));
         }
         history_indices.push(action_index as ActionIndex);
         history.push(action);
         // Observation extension by new observed
         for (ovec, option_ob) in observations.iter_mut().zip(obs) {
             if let Some(ob) = option_ob {
-                ovec.push(PlayerObservation::Observation(ob))
+                ovec.push(Observation::Obs(ob))
             }
         }
         HistoryInfo { state, active, history, history_indices, observations }

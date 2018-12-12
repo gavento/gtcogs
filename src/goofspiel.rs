@@ -1,5 +1,5 @@
 use bit_set::BitSet;
-use crate::{ActionIndex, ActivePlayer, Categorical, Game, HistoryInfo, Utility};
+use crate::{ActivePlayer, Categorical, Game, HistoryInfo, Utility};
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 pub enum Scoring {
@@ -84,7 +84,7 @@ impl Game for Goofspiel {
         // Play the selected card, update state
         let mut state = hist.state.clone();
         state.cards[prev_player].remove(*action as usize);
-        // Score update and observation
+        // Score update and Obs
         if prev_player == 1 {
             let bet = self.values[(history[len - 2] - 1) as usize];
             let winner = ((history[len - 1] as i32) - (*action as i32)).signum();
@@ -123,7 +123,7 @@ impl Game for Goofspiel {
 
 #[cfg(test)]
 mod test {
-    use super::super::PlayerObservation::*;
+    use crate::Observation::*;
     use super::{ActivePlayer, Categorical, Game, Goofspiel, Scoring};
 
     #[test]
@@ -146,48 +146,48 @@ mod test {
             assert_eq!(
                 hist.observations[0],
                 vec![
-                    Observation(2),
-                    OwnAction(1),
-                    Observation(-1),
-                    Observation(3),
-                    OwnAction(2),
-                    Observation(-1),
-                    Observation(4),
-                    OwnAction(3),
-                    Observation(0),
-                    Observation(1),
-                    OwnAction(4),
-                    Observation(1)
+                    Obs(2),
+                    Own(1),
+                    Obs(-1),
+                    Obs(3),
+                    Own(2),
+                    Obs(-1),
+                    Obs(4),
+                    Own(3),
+                    Obs(0),
+                    Obs(1),
+                    Own(4),
+                    Obs(1)
                 ]
             );
             assert_eq!(
                 hist.observations[1],
                 vec![
-                    Observation(2),
-                    OwnAction(2),
-                    Observation(-1),
-                    Observation(3),
-                    OwnAction(4),
-                    Observation(-1),
-                    Observation(4),
-                    OwnAction(3),
-                    Observation(0),
-                    Observation(1),
-                    OwnAction(1),
-                    Observation(1)
+                    Obs(2),
+                    Own(2),
+                    Obs(-1),
+                    Obs(3),
+                    Own(4),
+                    Obs(-1),
+                    Obs(4),
+                    Own(3),
+                    Obs(0),
+                    Obs(1),
+                    Own(1),
+                    Obs(1)
                 ]
             );
             assert_eq!(
                 hist.observations[2],
                 vec![
-                    Observation(2),
-                    Observation(-1),
-                    Observation(3),
-                    Observation(-1),
-                    Observation(4),
-                    Observation(0),
-                    Observation(1),
-                    Observation(1)
+                    Obs(2),
+                    Obs(-1),
+                    Obs(3),
+                    Obs(-1),
+                    Obs(4),
+                    Obs(0),
+                    Obs(1),
+                    Obs(1)
                 ]
             );
         }

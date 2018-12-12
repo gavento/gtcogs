@@ -1,10 +1,17 @@
 use crate::{Game, Categorical, Utility, ActionIndex};
+use std::{hash::Hash, fmt::Debug};
+
 
 #[derive(Clone, Hash, Debug, PartialEq, Eq)]
-pub enum PlayerObservation<G: Game> {
-    OwnAction(G::Action),
-    Observation(G::Observation),
+pub enum Observation<A, O> where
+    A: Clone + Hash + Debug + PartialEq + Eq,
+    O: Clone + Hash + Debug + PartialEq + Eq {
+    Own(A),
+    Obs(O),
 }
+
+#[allow(type_alias_bounds)]
+pub type PlayerObservation<G: Game> = Observation<G::Action, G::Observation>;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ActivePlayer<G: Game> {

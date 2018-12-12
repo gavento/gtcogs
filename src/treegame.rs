@@ -1,4 +1,4 @@
-use crate::{ActionIndex, ActivePlayer, Categorical, Game, HistoryInfo, PlayerObservation};
+use crate::{ActionIndex, ActivePlayer, Categorical, Game, HistoryInfo, Observation};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -60,7 +60,6 @@ where
 {
     pub fn from_game<G: Game<Observation = Obs>>(game: &G) -> Self {
         let mut obs_index: HashMap<G::Observation, usize> = HashMap::new();
-        let (s0, a0) = game.initial_state();
         TreeGame {
             players: game.players(),
             tree: traverse_game(
@@ -88,12 +87,12 @@ where
         .actions()
         .iter()
         .enumerate()
-        .map(|(i, a)| {
+        .map(|(i, _a)| {
             let h2 = game.play(hist, i);
             let obs_len = obs_index.len();
             let obs = h2.observations_since(hist).iter()
                 .map(|os| {
-                    if let Some(PlayerObservation::Observation(o)) = os.last() {
+                    if let Some(Observation::Obs(o)) = os.last() {
                         Some(*obs_index.entry(o.clone()).or_insert(obs_len + 1))
                     } else {
                         None
