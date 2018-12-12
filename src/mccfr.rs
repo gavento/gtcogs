@@ -2,7 +2,7 @@ use crate::{
     ActionIndex, ActivePlayer, Categorical, Game, HistoryInfo, PlayerObservation, Strategy,
 };
 use rand::Rng;
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct OuterMCCFR<G: Game> {
@@ -33,13 +33,6 @@ impl<G: Game> OuterMCCFR<G> {
             self.iterations += 1;
         }
     }
-    /*
-        pub fn sample_rng<OS, R>(&mut self, rng: &mut R, player: usize, other_strats: &[OS], epsilon: f64)
-            where OS: Strategy<G>, R: Rng {
-            self.iterations += 1;
-            self.sample_rec(rng, player, other_strats, self.game.start(), 1.0, 1.0, 1.0, epsilon);
-        }
-    */
 
     /// returns (utility, p_tail, p_sample_leaf)
     fn sample_rec<R: Rng>(

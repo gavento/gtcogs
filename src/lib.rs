@@ -1,5 +1,6 @@
 extern crate bit_set;
 extern crate rand;
+extern crate hashbrown;
 
 mod distribution;
 mod game;
