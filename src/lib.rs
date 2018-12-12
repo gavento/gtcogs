@@ -1,12 +1,9 @@
-#![feature(test)]
-
 extern crate bit_set;
 extern crate rand;
-extern crate test;
 
 mod distribution;
 mod game;
-mod goofspiel;
+pub mod goofspiel;
 mod history;
 mod mccfr;
 mod strategy;

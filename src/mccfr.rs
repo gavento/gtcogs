@@ -226,9 +226,8 @@ fn regret_matching(reg: &[f64]) -> Vec<f64> {
 
 #[cfg(test)]
 mod test {
-    use crate::{goofspiel, Game, Goofspiel, OuterMCCFR, Strategy, TreeGame};
+    use crate::{goofspiel, Game, Goofspiel, OuterMCCFR, Strategy};
     use rand::{rngs::SmallRng, SeedableRng};
-    use test::Bencher;
 
     #[test]
     fn test_goof3_mccfr() {
@@ -243,22 +242,5 @@ mod test {
         let s = g.play_owned(s, 1);
         let pol = mc.strategies[1].policy(&s.active, &s.observations[1]);
         assert!(pol.probs()[1] > 0.8);
-    }
-
-    #[bench]
-    fn bench_goof4_mccfr(b: &mut Bencher) {
-        let g = Goofspiel::new(3, goofspiel::Scoring::ZeroSum);
-        let mut mc = OuterMCCFR::new(g);
-        let mut rng = SmallRng::seed_from_u64(1);
-        b.iter(|| mc.compute_rng(1, 0.6, &mut rng));
-    }
-
-    #[bench]
-    fn bench_goof4tree_mccfr(b: &mut Bencher) {
-        let g = Goofspiel::new(3, goofspiel::Scoring::ZeroSum);
-        let t = TreeGame::from_game(&g);
-        let mut mc = OuterMCCFR::new(t);
-        let mut rng = SmallRng::seed_from_u64(1);
-        b.iter(|| mc.compute_rng(1, 0.6, &mut rng));
     }
 }
