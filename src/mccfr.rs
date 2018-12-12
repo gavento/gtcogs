@@ -210,8 +210,7 @@ impl<G: Game> Strategy<G> for RegretStrategy<G> {
 
 #[cfg(test)]
 mod test {
-    use super::OuterMCCFR;
-    use crate::{goofspiel, Goofspiel};
+    use crate::{goofspiel, Goofspiel, TreeGame, OuterMCCFR};
     use test::Bencher;
 
     #[test]
@@ -226,6 +225,15 @@ mod test {
     fn bench_goof4_mccfr(b: &mut Bencher) {
         let g = Goofspiel::new(3, goofspiel::Scoring::ZeroSum);
         let mut mc = OuterMCCFR::new(g);
+        let mut rng = rand::thread_rng();
+        b.iter(|| mc.compute_rng(1, 0.6, &mut rng));
+    }
+
+    #[bench]
+    fn bench_goof4tree_mccfr(b: &mut Bencher) {
+        let g = Goofspiel::new(3, goofspiel::Scoring::ZeroSum);
+        let t = TreeGame::from_game(&g);
+        let mut mc = OuterMCCFR::new(t);
         let mut rng = rand::thread_rng();
         b.iter(|| mc.compute_rng(1, 0.6, &mut rng));
     }
