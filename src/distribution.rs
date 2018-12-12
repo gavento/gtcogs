@@ -93,3 +93,15 @@ impl<T: Clone> Categorical<T> {
         (self.0[idx], self.2[idx].clone())
     }
 }
+
+pub fn sample_weighted<R: Rng>(ps: &[f64], rng: &mut R) -> usize {
+    debug_assert!((ps.iter().sum::<f64>() - 1.0).abs() < 1e-6);
+    let mut s: f64 = rng.sample(rand::distributions::Standard);
+    for (i, p) in ps.iter().enumerate() {
+        s -= p;
+        if s < 0.0 {
+            return i;
+        }
+    }
+    return ps.len() - 1;
+}

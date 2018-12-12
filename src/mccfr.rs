@@ -71,19 +71,24 @@ impl<G: Game> OuterMCCFR<G> {
             ActivePlayer::Player(player, ref actions) => {
                 let player = player as usize;
                 let n = actions.len();
-                let obs = &hinfo.observations[player].clone();
+                let obs: Vec<PlayerObservation<G>> = hinfo.observations[player].clone();
                 let eps = if player == updated_player {
                     epsilon
                 } else {
                     0.0
                 };
-                let policy = self.strategies[player].policy(&hinfo.active, &obs); // regret matching!
-                let a_sample = if rng.sample::<f64, _>(rand::distributions::OpenClosed01) < eps {
+                let regret: Option<_> = self.strategies[player].table.get(&obs).map(|e| &e.1);
+                let dist = match regret {
+                    Some(r) => regret_matching(r),
+                    None => vec![1.0 / n as f64; n],
+                };
+                //let policy = self.strategies[player].policy(&hinfo.active, &obs); // regret matching!
+                let a_sample = if rng.sample::<f64, _>(rand::distributions::Standard) < eps {
                     rng.gen_range(0, n)
                 } else {
-                    policy.sample_idx_rng(rng)
+                    crate::distribution::sample_weighted(&dist, rng)
                 };
-                let p_dist = policy.probs()[a_sample];
+                let p_dist = dist[a_sample];
                 let p_eps = eps / (n as f64) + (1.0 - eps) * p_dist;
 
                 let newinfo = self.game.play_owned(hinfo, a_sample);
@@ -118,7 +123,7 @@ impl<G: Game> OuterMCCFR<G> {
                         p_sample * p_eps,
                         epsilon,
                     );
-                    let mut ds = policy.probs().clone();
+                    let mut ds = dist;
                     ds.iter_mut().for_each(|v| {
                         *v *= p_reach_updated / p_sample_leaf;
                     });
@@ -208,24 +213,43 @@ impl<G: Game> Strategy<G> for RegretStrategy<G> {
     }
 }
 
+fn regret_matching(reg: &[f64]) -> Vec<f64> {
+    let regp = reg.iter().map(|&v| if v >= 0.0 { v } else { 0.0 });
+    let s = regp.clone().sum::<f64>();
+    let l = reg.len();
+    if s > 0.0 {
+        regp.map(|v| v / s).collect()
+    } else {
+        vec![1.0 / l as f64; l]
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::{goofspiel, Goofspiel, TreeGame, OuterMCCFR};
+    use crate::{goofspiel, Game, Goofspiel, OuterMCCFR, Strategy, TreeGame};
+    use rand::{rngs::SmallRng, SeedableRng};
     use test::Bencher;
 
     #[test]
     fn test_goof3_mccfr() {
         let g = Goofspiel::new(3, goofspiel::Scoring::ZeroSum);
-        let mut mc = OuterMCCFR::new(g);
-        let mut rng = rand::thread_rng();
-        mc.compute_rng(100, 0.6, &mut rng);
+        let mut mc = OuterMCCFR::new(g.clone());
+        let mut rng = SmallRng::seed_from_u64(1);
+        mc.compute_rng(5000, 0.6, &mut rng);
+        let s = g.start();
+        let s = g.play_owned(s, 1);
+        let pol = mc.strategies[0].policy(&s.active, &s.observations[0]);
+        assert!(pol.probs()[1] > 0.8);
+        let s = g.play_owned(s, 1);
+        let pol = mc.strategies[1].policy(&s.active, &s.observations[1]);
+        assert!(pol.probs()[1] > 0.8);
     }
 
     #[bench]
     fn bench_goof4_mccfr(b: &mut Bencher) {
         let g = Goofspiel::new(3, goofspiel::Scoring::ZeroSum);
         let mut mc = OuterMCCFR::new(g);
-        let mut rng = rand::thread_rng();
+        let mut rng = SmallRng::seed_from_u64(1);
         b.iter(|| mc.compute_rng(1, 0.6, &mut rng));
     }
 
@@ -234,7 +258,7 @@ mod test {
         let g = Goofspiel::new(3, goofspiel::Scoring::ZeroSum);
         let t = TreeGame::from_game(&g);
         let mut mc = OuterMCCFR::new(t);
-        let mut rng = rand::thread_rng();
+        let mut rng = SmallRng::seed_from_u64(1);
         b.iter(|| mc.compute_rng(1, 0.6, &mut rng));
     }
 }
